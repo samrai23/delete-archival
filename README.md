@@ -46,7 +46,7 @@ Edit [`configs/config.json`](configs/config.json) to specify:
 
 ## Running the Workflow
 
-The workflow is defined in [`workflows/delete-archival.json`](workflows/delete-archival.json) and can be triggered by your orchestrator (e.g., Argo, Airflow).
+The workflow is defined in [`workflows/delete-archival.json`](workflows/delete-archival.json) and can be triggered by your orchestrator which supports JSON workflow format (e.g., Argo, Airflow).
 
 ### Manual Execution
 
