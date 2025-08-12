@@ -1,0 +1,120 @@
+{
+	"id": "delete-archival",
+	"schedule": "None",
+	"target":["get_current_date","delete_archival_task"],
+	"tasks": [
+		{
+			"name": "get_current_date",
+			"type": "io.tasks.python.PythonTask",
+			"outputVariables": ["CALENDAR_WEEK"],
+			"config": {
+				"script": "gs://{{ARTIF_BUCKET}}/artifs/delete_archival/scripts/timestamp_script.py"
+			}
+		},
+		{
+			"name": "create_dataproc_cluster",
+			"type": "io.tasks.dataproc.CreateDataprocCluster",
+			"outputVariables": ["CLUSTER_NAME"],
+			"config": {
+				"projectId": "{{PROJECT_ID}}",
+				"clusterNamePrefix": "delete-archival-unicorn-{{CLIENT}}",
+				"numWorkers": 5,
+				"zone": "{{ZONE}}",
+				"subnetworkUri": "{{SUBNETWORK}}",
+				"imageVersion": "{{IMAGE_VERSION}}",
+				"masterMachineType": "e2-standard-16",
+				"workerMachineType": "e2-standard-16",
+				"serviceAccount": "{{SERVICE_ACCOUNT}}",
+				"region": "{{REGION}}",
+				"idleDeleteTTLInMins": 30,
+				"internalIpOnly": true,
+				"tags": [
+					"{{ALLOW_INTERNAL_TAG}}",
+					"{{WUP_TAG}}"
+				],
+				"initActionsUri": [
+					"gs://{{ARTIF_BUCKET}}/dataproc/proxy_host.sh",
+					"gs://{{ARTIF_BUCKET}}/dataproc/install_spark3_packages.sh",
+				    "gs://{{ARTIF_BUCKET}}/dataproc/hive-backport.sh",
+			        "gs://{{ARTIF_BUCKET}}/dataproc/cloud-sql-proxy.sh",
+					"gs://{{ARTIF_BUCKET}}/dataproc/install_spark3.sh"
+				],
+				"metadata": {
+					"hive-metastore-instance": "{{HIVE_METASTORE_INSTANCE}}",
+					"http_proxy": "{{INSTANCE_GROUP_NAME}}",
+					"proxy_zone": "{{INSTANCE_GROUP_ZONE}}"
+				},
+				"properties": {
+					"spark:spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
+					"spark:spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+					"spark-env:PYTHONIOENCODING": "UTF-8",
+					"spark-env:ARROW_PRE_0_15_IPC_FORMAT": "1",
+					"dataproc:dataproc.conscrypt.provider.enable":"false",
+					"spark:spark.eventLog.enabled": "true",
+					"spark:spark.eventLog.dir": "gs://{{ARTIF_BUCKET}}/spark-events",
+					"spark:spark.eventLog.rolling.enabled" : "true",
+					"spark:spark.eventLog.rolling.maxFileSize" : "128m",
+					"dataproc:dataproc.monitoring.stackdriver.enable": "true",
+					"dataproc:dataproc.monitoring.stacdriver.enable": "true"
+				},
+				"serviceAccountScopes": [
+					"https://www.googleapis.com/auth/cloud-platform"
+				],
+				"labels": {
+					"client": "{{CLIENT_SHORT_NAME}}",
+					"cost_centre": "{{COST_CENTRE_VALUE}}",
+					"component": "unicorn",
+					"sub_component": "data-archival",
+					"environment": "prd",
+					"business_criticality": "sev4",
+					"external": "false",
+					"workload": "dataprep_{{CALENDAR_WEEK}}_{{WORKFLOW_RUN_ID}}"
+				}
+			}
+		},
+		{
+			"name": "delete_archival_task",
+			"type": "io.tasks.dataproc.DataprocPySparkJob",
+			"config": {
+				"projectId": "{{PROJECT_ID}}",
+				"clusterName": "{{CLUSTER_NAME}}",
+				"region": "{{REGION}}",
+				"mainPythonFileUri": "gs://{{ARTIF_BUCKET}}/artifs/delete_archival/scripts/delete_archival.py",
+				"jobIdPrefix": "delete-archival-task-{{CLIENT}}",
+				"args": [
+					"gs://{{ARTIF_BUCKET}}/artifs/delete_archival/confs/config.json"
+					],
+				"properties": {
+					"spark.acls.enable": "true",
+					"spark.ui.view.acls": "*",
+					"spark.yarn.maxAppAttempts": "1",
+					"spark.sql.shuffle.partitions": "2000",
+					"spark.executor.memory": "17G",
+					"spark.executor.cores": "4",
+					"spark.executor.memoryOverhead": "3G",
+					"spark.driver.memory": "30g",
+					"spark.driver.cores": "10",
+					"spark.driver.memoryOverhead": "6G",
+					"spark.submit.deployMode": "client",
+					"spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version": "2",
+					"mapreduce.fileoutputcommitter.algorithm.version": "2",
+					"spark.haddop.fs.gs.metadata.cache.type": "IN_MEMORY",
+					"spark.shuffle.useOldFetchProtocol": "true"
+				}
+			},
+			"continueOnFailure": true
+		},
+		{
+			"name": "delete_dataproc_cluster",
+			"type": "io.tasks.dataproc.DeleteDataprocCluster",
+			"preConditions": {
+				"create_dataproc_cluster": "success"
+			},
+			"config": {
+				"projectId": "{{PROJECT_ID}}",
+				"clusterName": "{{CLUSTER_NAME}}",
+				"region": "{{REGION}}"
+			}
+		}
+	]
+}

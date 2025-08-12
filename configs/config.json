@@ -1,0 +1,53 @@
+{
+  "date_table": "market1_media_mart.dates",
+  "archival_list": {
+    "0": {
+      "path": "market1_prod_sciencebank.scores_latest_tbl",
+      "archival_cadence": "week",
+      "duration": "15",
+      "partition": "cadence_week"
+    },
+    "1": {
+      "path": "gs://prod-market1-data/ml/scores",
+      "archival_cadence": "week",
+      "duration": "15",
+      "partition": "fis_week_id"
+    },
+    "2": {
+      "path": "gs://prod-market1-data/data/science1/category_scores",
+      "archival_cadence": "week",
+      "duration": "15",
+      "partition": ""
+    },
+    "3": {
+      "path": "gs://prod-market1-data/data/science1/subcategory_scores",
+      "archival_cadence": "week",
+      "duration": "15",
+      "partition": ""
+    },
+    "4": {
+      "path": "market1_prod_sciencebank.category_scores",
+      "archival_cadence": "week",
+      "duration": "15",
+      "partition": "cadence_week"
+    },
+    "5": {
+      "path": "market1_prod_sciencebank.subcategory_scores",
+      "archival_cadence": "week",
+      "duration": "15",
+      "partition": "cadence_week"
+    },
+    "6": {
+      "path": "market1_prod_sciencebank.customer_cluster_output",
+      "archival_cadence": "week",
+      "duration": "15",
+      "partition": "cadence_week"
+    },
+    "7": {
+      "path": "market1_prod_sciencebank.science2_output",
+      "archival_cadence": "week",
+      "duration": "15",
+      "partition": "fis_week_id"
+    }
+  }
+}
